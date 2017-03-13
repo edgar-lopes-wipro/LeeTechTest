@@ -8,8 +8,12 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+protocol WeatherReportViewProtocol {
+    func showCurrentReport(weatherResponse: WeatherResponse)
+    func failedToGetReport(error: BTError?)
+}
 
+class ViewController: UIViewController, WeatherReportViewProtocol {
     private let api = APIService()
     private let forcastDataSource = ForcastTableViewDataSource()
 
@@ -19,6 +23,7 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = Settings.defaultCityName
+        api.view = self
         retrieveForcast(.metric)
         forcastTableView.dataSource = forcastDataSource
     }
@@ -26,17 +31,6 @@ class ViewController: UIViewController {
     func retrieveForcast(_ unit: APIService.unit) {
         todaysForcastView.setLoadingState()
         api.retrieveFiveDayForcast(Settings.defaultCityName, Settings.defaultCountryCode, unit)
-        { [unowned self] (weatherResponse, error) in
-            if let response = weatherResponse {
-                DispatchQueue.main.async {
-                    self.setViews(response)
-                }
-            } else {
-                DispatchQueue.main.async {
-                    self.todaysForcastView.setErrorState()
-                }
-            }
-        }
     }
     
     func setViews(_ response: WeatherResponse) {
@@ -60,3 +54,16 @@ class ViewController: UIViewController {
 
 }
 
+extension WeatherReportViewProtocol where Self: ViewController {
+    
+    func showCurrentReport(weatherResponse: WeatherResponse) {
+        DispatchQueue.main.async {
+            self.setViews(weatherResponse)
+        }
+    }
+    func failedToGetReport(error: BTError?) {
+        DispatchQueue.main.async {
+            self.todaysForcastView.setErrorState()
+        }
+    }
+}

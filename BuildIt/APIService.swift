@@ -8,9 +8,15 @@
 
 import UIKit
 
+protocol APIServiceProtocol {
+    var view: ViewController? { get }
+}
+
 //http://api.openweathermap.org/data/2.5/forecast?q=London,UK&mode=json&appid=4e5a983b87ab7358ea008839fed32386
 
-class APIService: NSObject {
+class APIService: NSObject, APIServiceProtocol {
+    internal var view: ViewController?
+
 
     private let endpoint = "http://api.openweathermap.org/data/2.5/forecast?q="
     private let apiKey = "&mode=json&appid=4e5a983b87ab7358ea008839fed32386"
@@ -24,23 +30,23 @@ class APIService: NSObject {
         case imperial = "imperial"
     }
     
-    func retrieveFiveDayForcast(_ cityName: String, _ countryCode: String, _ unit: unit, completion: @escaping ((_ response: WeatherResponse?, _ error: BTError?) -> ())) {
+    func retrieveFiveDayForcast(_ cityName: String, _ countryCode: String, _ unit: unit) {
         let query = "\(cityName),\(countryCode)"
         let unit = "&units=\(unit.rawValue)"
         guard let url = URL.init(string: endpoint + query + unit + apiKey) else {
             //bad url
-            completion(nil, BTError.init(.badRequest))
+            view?.failedToGetReport(error: BTError.init(.badRequest))
             return
         }
         
 
         performRequest(.get, url) { (data, error) in
             if let data = data {
-                completion(WeatherResponse.init(data), nil)
+                self.view?.showCurrentReport(weatherResponse: WeatherResponse.init(data))
             } else if let error = error {
-                completion(nil, error)
+                self.view?.failedToGetReport(error: error)
             } else {
-                completion(nil, BTError.init(.badRequest))
+               self.view?.failedToGetReport(error: BTError.init(.badRequest))
             }
         }
         
