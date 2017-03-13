@@ -33,7 +33,7 @@ class APIService: NSObject {
             return
         }
         
-        
+
         performRequest(.get, url) { (data, error) in
             if let data = data {
                 completion(WeatherResponse.init(data), nil)
